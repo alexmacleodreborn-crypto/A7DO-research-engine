@@ -32,7 +32,7 @@ class A7DOResearchEngine:
         return list(nodes)
 
     # -----------------------------
-    # Path Detection (DFS)
+    # DFS Path Detection
     # -----------------------------
     def find_paths(self, start, end, path=None):
         if path is None:
@@ -55,7 +55,34 @@ class A7DOResearchEngine:
         return paths
 
     # -----------------------------
-    # Compute Z (rigidity)
+    # Parse Hypothesis (simple)
+    # Assumes format: "A influences C"
+    # -----------------------------
+    def parse_hypothesis(self, text):
+        words = text.split()
+        if len(words) >= 3:
+            return words[0], words[-1]
+        return None, None
+
+    # -----------------------------
+    # Missing Link Detection
+    # -----------------------------
+    def detect_missing_links(self, hypothesis):
+        start, end = self.parse_hypothesis(hypothesis.text)
+
+        if not start or not end:
+            return []
+
+        paths = self.find_paths(start, end)
+
+        if paths:
+            return []  # No missing link if path exists
+
+        # Suggest direct missing edge
+        return [(start, "potential_link", end)]
+
+    # -----------------------------
+    # Compute Z
     # -----------------------------
     def compute_Z(self):
         nodes = self.nodes()
@@ -69,7 +96,7 @@ class A7DOResearchEngine:
         return actual_edges / possible_edges
 
     # -----------------------------
-    # Compute Sigma (entropy proxy)
+    # Compute Sigma
     # -----------------------------
     def compute_Sigma(self):
         nodes = self.nodes()
@@ -113,22 +140,17 @@ class A7DOResearchEngine:
             "confidence": hypothesis.confidence
         })
 
-        # Detect paths related to hypothesis wording
-        detected_paths = []
-        nodes = self.nodes()
+        start, end = self.parse_hypothesis(hypothesis.text)
+        paths = []
+        if start and end:
+            paths = self.find_paths(start, end)
 
-        for a in nodes:
-            for b in nodes:
-                if a != b:
-                    paths = self.find_paths(a, b)
-                    if paths:
-                        for p in paths:
-                            if len(p) > 1:
-                                detected_paths.append(p)
+        missing_links = self.detect_missing_links(hypothesis)
 
         return {
             "Z": Z,
             "Sigma": Sigma,
             "confidence": hypothesis.confidence,
-            "paths": detected_paths
+            "paths": paths,
+            "missing_links": missing_links
         }
