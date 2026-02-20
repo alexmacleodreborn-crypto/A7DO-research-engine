@@ -7,54 +7,60 @@ st.set_page_config(layout="wide")
 st.title("🧠 A7DO Research Engine v0.1")
 
 # -------------------------------------------------
-# Persistent Engine (stored in session state)
+# Persistent State
 # -------------------------------------------------
 if "engine" not in st.session_state:
     st.session_state.engine = A7DOResearchEngine()
 
-if "hypothesis" not in st.session_state:
-    st.session_state.hypothesis = None
+if "hypothesis_obj" not in st.session_state:
+    st.session_state.hypothesis_obj = None
 
 engine = st.session_state.engine
 
 
 # -------------------------------------------------
-# 1️⃣ Hypothesis Input
+# 1️⃣ Hypothesis Section
 # -------------------------------------------------
 st.header("1️⃣ Hypothesis")
 
-hyp_text = st.text_input("Enter hypothesis")
+hyp_text = st.text_input(
+    "Enter hypothesis",
+    value="" if st.session_state.hypothesis_obj is None 
+    else st.session_state.hypothesis_obj.text
+)
 
-if hyp_text:
-    if st.session_state.hypothesis is None:
-        st.session_state.hypothesis = Hypothesis(hyp_text)
+if st.button("Set Hypothesis"):
+    if hyp_text.strip() == "":
+        st.warning("Enter a hypothesis first.")
+    else:
+        st.session_state.hypothesis_obj = Hypothesis(hyp_text)
+        st.success("Hypothesis set.")
 
-hypothesis = st.session_state.hypothesis
+hypothesis = st.session_state.hypothesis_obj
 
 
 # -------------------------------------------------
-# 2️⃣ Add Structural Relations
+# 2️⃣ Relation Builder (Always Visible)
 # -------------------------------------------------
-if hypothesis:
-    st.header("2️⃣ Add Structural Relations")
+st.header("2️⃣ Add Structural Relations")
 
-    col1, col2, col3 = st.columns(3)
+col1, col2, col3 = st.columns(3)
 
-    with col1:
-        source = st.text_input("Source")
+with col1:
+    source = st.text_input("Source")
 
-    with col2:
-        relation = st.text_input("Relation")
+with col2:
+    relation = st.text_input("Relation")
 
-    with col3:
-        target = st.text_input("Target")
+with col3:
+    target = st.text_input("Target")
 
-    if st.button("Add Relation"):
-        if source and relation and target:
-            engine.add_relation(source, relation, target)
-            st.success(f"Added: {source} --{relation}--> {target}")
-        else:
-            st.warning("Fill all fields before adding relation.")
+if st.button("Add Relation"):
+    if source and relation and target:
+        engine.add_relation(source, relation, target)
+        st.success(f"Added: {source} --{relation}--> {target}")
+    else:
+        st.warning("Fill all three fields.")
 
 
 # -------------------------------------------------
@@ -83,18 +89,19 @@ if engine.graph:
 # -------------------------------------------------
 # 3️⃣ Run Analysis
 # -------------------------------------------------
-if hypothesis:
-    st.header("3️⃣ Run Analysis")
+st.header("3️⃣ Run Analysis")
 
-    if st.button("Analyze"):
+if st.button("Analyze"):
+    if hypothesis is None:
+        st.warning("Set a hypothesis first.")
+    else:
         result = engine.analyze(hypothesis)
-
         st.subheader("Z–Σ Output")
         st.write(result)
 
 
 # -------------------------------------------------
-# 📈 Confidence Evolution Plot
+# 📈 Confidence Evolution
 # -------------------------------------------------
 if hypothesis and hypothesis.history:
     st.header("📈 Confidence Evolution")
