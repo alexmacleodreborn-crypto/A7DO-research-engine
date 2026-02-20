@@ -35,7 +35,6 @@ if st.button("Set Hypothesis"):
     else:
         st.session_state.hypothesis_obj = Hypothesis(hyp_text)
         st.success("Hypothesis set.")
-        st.experimental_rerun()
 
 hypothesis = st.session_state.hypothesis_obj
 
@@ -98,9 +97,7 @@ if st.button("Analyze"):
     else:
         result = engine.analyze(hypothesis)
 
-        # -----------------------------
         # Z–Σ Output
-        # -----------------------------
         st.subheader("Z–Σ Output")
         st.write({
             "Z": result["Z"],
@@ -108,9 +105,7 @@ if st.button("Analyze"):
             "confidence": result["confidence"]
         })
 
-        # -----------------------------
         # Detected Paths
-        # -----------------------------
         st.subheader("🔎 Detected Paths")
 
         if result["paths"]:
@@ -119,9 +114,7 @@ if st.button("Analyze"):
         else:
             st.write("No path found for hypothesis.")
 
-        # -----------------------------
         # Missing Links
-        # -----------------------------
         st.subheader("🧩 Missing Links")
 
         if result["missing_links"]:
