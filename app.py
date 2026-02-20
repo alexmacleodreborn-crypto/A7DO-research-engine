@@ -28,20 +28,20 @@ st.header("1️⃣ Symbolic Hypothesis")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    subject = st.text_input("Subject (e.g. ϕ, A, ScalarField)")
+    subject = st.text_input("Hypothesis Subject", key="hyp_subject")
 
 with col2:
-    relation = st.text_input("Relation")
+    hyp_relation = st.text_input("Hypothesis Relation", key="hyp_relation")
 
 with col3:
-    obj = st.text_input("Object")
+    obj = st.text_input("Hypothesis Object", key="hyp_object")
 
 if st.button("Set Hypothesis"):
-    if subject and relation and obj:
-        st.session_state.hypothesis_obj = SymbolicHypothesis(subject, relation, obj)
+    if subject and hyp_relation and obj:
+        st.session_state.hypothesis_obj = SymbolicHypothesis(subject, hyp_relation, obj)
         st.success("Hypothesis set.")
     else:
-        st.warning("Fill all fields.")
+        st.warning("Fill all hypothesis fields.")
 
 hypothesis = st.session_state.hypothesis_obj
 
@@ -53,13 +53,13 @@ st.header("2️⃣ Add Structural Relations")
 col4, col5, col6 = st.columns(3)
 
 with col4:
-    src = st.text_input("Source")
+    src = st.text_input("Relation Source", key="rel_source")
 
 with col5:
-    rel = st.text_input("Relation")
+    rel = st.text_input("Relation Type", key="rel_type")
 
 with col6:
-    tgt = st.text_input("Target")
+    tgt = st.text_input("Relation Target", key="rel_target")
 
 if st.button("Add Relation"):
     if src and rel and tgt:
@@ -67,7 +67,7 @@ if st.button("Add Relation"):
         engine.add_relation(relation_obj)
         st.success(f"Added: {src} --{rel}--> {tgt}")
     else:
-        st.warning("Fill all fields.")
+        st.warning("Fill all relation fields.")
 
 # -------------------------------------------------
 # Graph View
