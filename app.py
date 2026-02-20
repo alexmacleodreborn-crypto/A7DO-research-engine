@@ -4,10 +4,10 @@ import networkx as nx
 from engine import A7DOResearchEngine, Hypothesis
 
 st.set_page_config(layout="wide")
-st.title("🧠 A7DO Research Engine v0.1")
+st.title("🧠 A7DO Research Engine v0.2")
 
 # -------------------------------------------------
-# Persistent State
+# Persistent Session State
 # -------------------------------------------------
 if "engine" not in st.session_state:
     st.session_state.engine = A7DOResearchEngine()
@@ -16,6 +16,7 @@ if "hypothesis_obj" not in st.session_state:
     st.session_state.hypothesis_obj = None
 
 engine = st.session_state.engine
+hypothesis = st.session_state.hypothesis_obj
 
 
 # -------------------------------------------------
@@ -24,9 +25,8 @@ engine = st.session_state.engine
 st.header("1️⃣ Hypothesis")
 
 hyp_text = st.text_input(
-    "Enter hypothesis",
-    value="" if st.session_state.hypothesis_obj is None 
-    else st.session_state.hypothesis_obj.text
+    "Enter hypothesis (e.g., A influences C)",
+    value="" if hypothesis is None else hypothesis.text
 )
 
 if st.button("Set Hypothesis"):
@@ -35,6 +35,7 @@ if st.button("Set Hypothesis"):
     else:
         st.session_state.hypothesis_obj = Hypothesis(hyp_text)
         st.success("Hypothesis set.")
+        st.experimental_rerun()
 
 hypothesis = st.session_state.hypothesis_obj
 
@@ -60,7 +61,7 @@ if st.button("Add Relation"):
         engine.add_relation(source, relation, target)
         st.success(f"Added: {source} --{relation}--> {target}")
     else:
-        st.warning("Fill all three fields.")
+        st.warning("Fill all three fields before adding relation.")
 
 
 # -------------------------------------------------
@@ -97,6 +98,9 @@ if st.button("Analyze"):
     else:
         result = engine.analyze(hypothesis)
 
+        # -----------------------------
+        # Z–Σ Output
+        # -----------------------------
         st.subheader("Z–Σ Output")
         st.write({
             "Z": result["Z"],
@@ -104,17 +108,31 @@ if st.button("Analyze"):
             "confidence": result["confidence"]
         })
 
+        # -----------------------------
+        # Detected Paths
+        # -----------------------------
         st.subheader("🔎 Detected Paths")
 
         if result["paths"]:
             for p in result["paths"]:
                 st.write(" → ".join(p))
         else:
-            st.write("No multi-hop paths detected.")
+            st.write("No path found for hypothesis.")
+
+        # -----------------------------
+        # Missing Links
+        # -----------------------------
+        st.subheader("🧩 Missing Links")
+
+        if result["missing_links"]:
+            for m in result["missing_links"]:
+                st.write(f"{m[0]} → {m[2]} (suggested)")
+        else:
+            st.write("No missing links detected.")
 
 
 # -------------------------------------------------
-# 📈 Confidence Evolution Plot
+# 📈 Confidence Evolution
 # -------------------------------------------------
 if hypothesis and hypothesis.history:
     st.header("📈 Confidence Evolution")
