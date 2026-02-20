@@ -40,7 +40,7 @@ hypothesis = st.session_state.hypothesis_obj
 
 
 # -------------------------------------------------
-# 2️⃣ Relation Builder (Always Visible)
+# 2️⃣ Add Structural Relations
 # -------------------------------------------------
 st.header("2️⃣ Add Structural Relations")
 
@@ -96,12 +96,25 @@ if st.button("Analyze"):
         st.warning("Set a hypothesis first.")
     else:
         result = engine.analyze(hypothesis)
+
         st.subheader("Z–Σ Output")
-        st.write(result)
+        st.write({
+            "Z": result["Z"],
+            "Sigma": result["Sigma"],
+            "confidence": result["confidence"]
+        })
+
+        st.subheader("🔎 Detected Paths")
+
+        if result["paths"]:
+            for p in result["paths"]:
+                st.write(" → ".join(p))
+        else:
+            st.write("No multi-hop paths detected.")
 
 
 # -------------------------------------------------
-# 📈 Confidence Evolution
+# 📈 Confidence Evolution Plot
 # -------------------------------------------------
 if hypothesis and hypothesis.history:
     st.header("📈 Confidence Evolution")
