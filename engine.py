@@ -15,9 +15,15 @@ class A7DOResearchEngine:
     def __init__(self):
         self.graph = defaultdict(dict)
 
+    # -----------------------------
+    # Add relation
+    # -----------------------------
     def add_relation(self, source, relation, target):
         self.graph[source][target] = relation
 
+    # -----------------------------
+    # Get all nodes
+    # -----------------------------
     def nodes(self):
         nodes = set(self.graph.keys())
         for src in self.graph:
@@ -25,6 +31,32 @@ class A7DOResearchEngine:
                 nodes.add(tgt)
         return list(nodes)
 
+    # -----------------------------
+    # Path Detection (DFS)
+    # -----------------------------
+    def find_paths(self, start, end, path=None):
+        if path is None:
+            path = [start]
+
+        if start == end:
+            return [path]
+
+        if start not in self.graph:
+            return []
+
+        paths = []
+
+        for node in self.graph[start]:
+            if node not in path:
+                new_paths = self.find_paths(node, end, path + [node])
+                for p in new_paths:
+                    paths.append(p)
+
+        return paths
+
+    # -----------------------------
+    # Compute Z (rigidity)
+    # -----------------------------
     def compute_Z(self):
         nodes = self.nodes()
         n = len(nodes)
@@ -33,8 +65,12 @@ class A7DOResearchEngine:
 
         possible_edges = n * (n - 1)
         actual_edges = sum(len(self.graph[src]) for src in self.graph)
+
         return actual_edges / possible_edges
 
+    # -----------------------------
+    # Compute Sigma (entropy proxy)
+    # -----------------------------
     def compute_Sigma(self):
         nodes = self.nodes()
         if not nodes:
@@ -57,6 +93,9 @@ class A7DOResearchEngine:
 
         return components / len(nodes)
 
+    # -----------------------------
+    # Run analysis
+    # -----------------------------
     def analyze(self, hypothesis):
         Z = self.compute_Z()
         Sigma = self.compute_Sigma()
@@ -74,8 +113,22 @@ class A7DOResearchEngine:
             "confidence": hypothesis.confidence
         })
 
+        # Detect paths related to hypothesis wording
+        detected_paths = []
+        nodes = self.nodes()
+
+        for a in nodes:
+            for b in nodes:
+                if a != b:
+                    paths = self.find_paths(a, b)
+                    if paths:
+                        for p in paths:
+                            if len(p) > 1:
+                                detected_paths.append(p)
+
         return {
             "Z": Z,
             "Sigma": Sigma,
-            "confidence": hypothesis.confidence
+            "confidence": hypothesis.confidence,
+            "paths": detected_paths
         }
