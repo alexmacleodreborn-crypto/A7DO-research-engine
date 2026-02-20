@@ -1,13 +1,15 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import networkx as nx
-from engine import A7DOResearchEngine, Hypothesis
+
+from engine import A7DOResearchEngine
+from models import SymbolicRelation, SymbolicHypothesis
 
 st.set_page_config(layout="wide")
-st.title("🧠 A7DO Research Engine v0.2")
+st.title("🧠 A7DO Research Engine v0.3 (Symbolic)")
 
 # -------------------------------------------------
-# Persistent Session State
+# Session State
 # -------------------------------------------------
 if "engine" not in st.session_state:
     st.session_state.engine = A7DOResearchEngine()
@@ -18,63 +20,66 @@ if "hypothesis_obj" not in st.session_state:
 engine = st.session_state.engine
 hypothesis = st.session_state.hypothesis_obj
 
-
 # -------------------------------------------------
-# 1️⃣ Hypothesis Section
+# 1️⃣ Symbolic Hypothesis Input
 # -------------------------------------------------
-st.header("1️⃣ Hypothesis")
+st.header("1️⃣ Symbolic Hypothesis")
 
-hyp_text = st.text_input(
-    "Enter hypothesis (e.g., A influences C)",
-    value="" if hypothesis is None else hypothesis.text
-)
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    subject = st.text_input("Subject (e.g. ϕ, A, ScalarField)")
+
+with col2:
+    relation = st.text_input("Relation")
+
+with col3:
+    obj = st.text_input("Object")
 
 if st.button("Set Hypothesis"):
-    if hyp_text.strip() == "":
-        st.warning("Enter a hypothesis first.")
-    else:
-        st.session_state.hypothesis_obj = Hypothesis(hyp_text)
+    if subject and relation and obj:
+        st.session_state.hypothesis_obj = SymbolicHypothesis(subject, relation, obj)
         st.success("Hypothesis set.")
+    else:
+        st.warning("Fill all fields.")
 
 hypothesis = st.session_state.hypothesis_obj
-
 
 # -------------------------------------------------
 # 2️⃣ Add Structural Relations
 # -------------------------------------------------
 st.header("2️⃣ Add Structural Relations")
 
-col1, col2, col3 = st.columns(3)
+col4, col5, col6 = st.columns(3)
 
-with col1:
-    source = st.text_input("Source")
+with col4:
+    src = st.text_input("Source")
 
-with col2:
-    relation = st.text_input("Relation")
+with col5:
+    rel = st.text_input("Relation")
 
-with col3:
-    target = st.text_input("Target")
+with col6:
+    tgt = st.text_input("Target")
 
 if st.button("Add Relation"):
-    if source and relation and target:
-        engine.add_relation(source, relation, target)
-        st.success(f"Added: {source} --{relation}--> {target}")
+    if src and rel and tgt:
+        relation_obj = SymbolicRelation(src, rel, tgt)
+        engine.add_relation(relation_obj)
+        st.success(f"Added: {src} --{rel}--> {tgt}")
     else:
-        st.warning("Fill all three fields before adding relation.")
-
+        st.warning("Fill all fields.")
 
 # -------------------------------------------------
-# 📊 Graph View
+# Graph View
 # -------------------------------------------------
 if engine.graph:
     st.header("📊 Graph View")
 
     G = nx.DiGraph()
 
-    for src in engine.graph:
-        for tgt in engine.graph[src]:
-            rel = engine.graph[src][tgt]
-            G.add_edge(src, tgt, label=rel)
+    for s in engine.graph:
+        for t in engine.graph[s]:
+            G.add_edge(s, t, label=engine.graph[s][t])
 
     pos = nx.spring_layout(G)
 
@@ -85,19 +90,17 @@ if engine.graph:
 
     st.pyplot(fig)
 
-
 # -------------------------------------------------
-# 3️⃣ Run Analysis
+# Run Analysis
 # -------------------------------------------------
 st.header("3️⃣ Run Analysis")
 
 if st.button("Analyze"):
     if hypothesis is None:
-        st.warning("Set a hypothesis first.")
+        st.warning("Set hypothesis first.")
     else:
         result = engine.analyze(hypothesis)
 
-        # Z–Σ Output
         st.subheader("Z–Σ Output")
         st.write({
             "Z": result["Z"],
@@ -105,16 +108,14 @@ if st.button("Analyze"):
             "confidence": result["confidence"]
         })
 
-        # Detected Paths
-        st.subheader("🔎 Detected Paths")
+        st.subheader("🔎 Paths")
 
         if result["paths"]:
             for p in result["paths"]:
                 st.write(" → ".join(p))
         else:
-            st.write("No path found for hypothesis.")
+            st.write("No path found.")
 
-        # Missing Links
         st.subheader("🧩 Missing Links")
 
         if result["missing_links"]:
@@ -123,9 +124,8 @@ if st.button("Analyze"):
         else:
             st.write("No missing links detected.")
 
-
 # -------------------------------------------------
-# 📈 Confidence Evolution
+# Confidence Evolution
 # -------------------------------------------------
 if hypothesis and hypothesis.history:
     st.header("📈 Confidence Evolution")
