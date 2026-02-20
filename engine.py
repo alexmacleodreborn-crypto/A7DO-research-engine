@@ -1,14 +1,7 @@
+# engine.py
+
 import time
 from collections import defaultdict
-
-
-class Hypothesis:
-    def __init__(self, text):
-        self.text = text
-        self.confidence = 0.2
-        self.Z = 0
-        self.Sigma = 0
-        self.history = []
 
 
 class A7DOResearchEngine:
@@ -18,8 +11,9 @@ class A7DOResearchEngine:
     # -----------------------------
     # Add relation
     # -----------------------------
-    def add_relation(self, source, relation, target):
-        self.graph[source][target] = relation
+    def add_relation(self, relation_obj):
+        src, rel, tgt = relation_obj.as_tuple()
+        self.graph[src][tgt] = rel
 
     # -----------------------------
     # Get all nodes
@@ -32,7 +26,7 @@ class A7DOResearchEngine:
         return list(nodes)
 
     # -----------------------------
-    # DFS Path Detection
+    # DFS path detection
     # -----------------------------
     def find_paths(self, start, end, path=None):
         if path is None:
@@ -55,30 +49,17 @@ class A7DOResearchEngine:
         return paths
 
     # -----------------------------
-    # Parse Hypothesis (simple)
-    # Assumes format: "A influences C"
-    # -----------------------------
-    def parse_hypothesis(self, text):
-        words = text.split()
-        if len(words) >= 3:
-            return words[0], words[-1]
-        return None, None
-
-    # -----------------------------
-    # Missing Link Detection
+    # Missing link detection
     # -----------------------------
     def detect_missing_links(self, hypothesis):
-        start, end = self.parse_hypothesis(hypothesis.text)
-
-        if not start or not end:
-            return []
+        start = hypothesis.subject
+        end = hypothesis.object
 
         paths = self.find_paths(start, end)
 
         if paths:
-            return []  # No missing link if path exists
+            return []
 
-        # Suggest direct missing edge
         return [(start, "potential_link", end)]
 
     # -----------------------------
@@ -140,11 +121,7 @@ class A7DOResearchEngine:
             "confidence": hypothesis.confidence
         })
 
-        start, end = self.parse_hypothesis(hypothesis.text)
-        paths = []
-        if start and end:
-            paths = self.find_paths(start, end)
-
+        paths = self.find_paths(hypothesis.subject, hypothesis.object)
         missing_links = self.detect_missing_links(hypothesis)
 
         return {
